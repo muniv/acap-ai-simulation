@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>네 회사의 경주</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@700&display=swap">
+<style>
+/* Layout: one control strip on top, score chart left, small-multiple knowledge maps right, table and rules below. */
+:root {
+  --plane: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10); --wash: rgba(11,11,11,.05);
+  --btn-bg: #0b0b0b; --btn-fg: #fcfcfb;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --font-body: "IBM Plex Sans KR", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-display: "Noto Serif KR", "AppleMyungjo", "Batang", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --plane: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10); --wash: rgba(255,255,255,.07);
+    --btn-bg: #ffffff; --btn-fg: #0d0d0d;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --plane: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10); --wash: rgba(255,255,255,.07);
+  --btn-bg: #ffffff; --btn-fg: #0d0d0d;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--plane); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.page { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+h1 { font-family: var(--font-display); font-size: 30px; line-height: 1.25; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--ink2); max-width: 68ch; }
+h2 { font-size: 15px; font-weight: 600; margin: 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+
+/* controls */
+.controls { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: flex-end; }
+.ctl { display: flex; flex-direction: column; gap: 4px; flex: 1 1 190px; min-width: 0; }
+.ctl-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--ink2); }
+.ctl-head output { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--ink); margin: 0; height: 22px; }
+.ctl.off { opacity: .45; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink2); flex: 0 0 auto; padding-bottom: 3px; }
+.check input { width: 16px; height: 16px; accent-color: var(--ink); margin: 0; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.presets span { font-size: 13px; color: var(--muted); }
+button { font: inherit; font-size: 13px; font-weight: 500; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--ink); padding: 6px 12px; cursor: pointer; }
+button:hover { background: var(--wash); }
+button.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); min-width: 84px; }
+button.primary:hover { opacity: .88; }
+button[aria-pressed="true"] { background: var(--wash); border-color: var(--ink2); }
+:is(button, input, .plot):focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+
+/* stage */
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 20px; align-items: start; }
+.stage.five { grid-template-columns: minmax(0, 1fr); }
+.chart-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.chart-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; }
+.sub { font-size: 13px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--ink2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 14px; height: 0; border-top: 2px solid; }
+.legend i.shift { width: 0; height: 12px; border-top: 0; border-left: 1px solid var(--muted); }
+.plot { position: relative; min-width: 0; border-radius: 4px; }
+.plot svg { display: block; width: 100%; touch-action: pan-y; }
+.plot text { font-family: var(--font-body); font-size: 12px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.plot text.end { fill: var(--ink); font-weight: 600; }
+.tip { position: absolute; top: 8px; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.12); min-width: 132px; }
+.tip b { display: block; font-weight: 600; margin-bottom: 4px; }
+.tip div { display: flex; align-items: center; gap: 6px; color: var(--ink2); white-space: nowrap; }
+.tip div i { width: 10px; border-top: 2px solid; }
+.tip div strong { color: var(--ink); font-variant-numeric: tabular-nums; min-width: 26px; text-align: right; }
+.play { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.play input { flex: 1 1 160px; min-width: 0; }
+.play output { font-size: 13px; color: var(--ink2); font-variant-numeric: tabular-nums; min-width: 62px; text-align: right; }
+
+.maps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+.maps.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.map { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.map-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.map-name { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 14px; min-width: 0; }
+.map-name i { flex: none; width: 10px; height: 10px; border-radius: 2px; }
+.map-score { font-weight: 600; font-variant-numeric: tabular-nums; }
+.map-sub { font-size: 12px; color: var(--muted); margin-top: -6px; }
+.map canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 1 / 1; border: 1px solid var(--grid); border-radius: 4px; }
+.key { padding: 10px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; font-size: 13px; color: var(--ink2); }
+.key strong { color: var(--ink); font-weight: 600; }
+.key ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.key li { display: flex; align-items: center; gap: 8px; }
+.key svg { flex: none; }
+
+/* table */
+.table-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th { font-weight: 500; color: var(--muted); font-size: 12px; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+td:first-child { font-weight: 600; }
+td:first-child i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 7px; }
+td:nth-child(2) { color: var(--ink2); white-space: normal; min-width: 150px; }
+tr:last-child td { border-bottom: 0; }
+
+/* rules */
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 32px; margin: 0; }
+.rules div { min-width: 0; }
+.rules dt { font-weight: 600; font-size: 14px; }
+.rules dd { margin: 0; color: var(--ink2); font-size: 14px; }
+.note { color: var(--ink2); font-size: 13px; max-width: 80ch; margin: 0; }
+.note a { color: inherit; }
+section { display: flex; flex-direction: column; gap: 12px; }
+
+@media (max-width: 880px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .maps.five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rules { grid-template-columns: minmax(0, 1fr); }
+  h1 { font-size: 25px; }
+}
+</style>
+
+<div class="page">
+  <header>
+    <h1>네 회사의 경주</h1>
+    <p class="lede">같은 지식에서 출발한 회사들이 80분기 동안 새 지식을 흡수합니다. 사람만 배우는 회사와 AI가 함께 배우는 회사는 퇴사와 환경 변화 앞에서 어떻게 달라질까요. Pedota (2026)의 확장된 흡수역량 모형을 단순한 규칙으로 옮긴 예시 시뮬레이션입니다.</p>
+  </header>
+
+  <div class="card controls">
+    <div class="presets" role="group" aria-label="시나리오">
+      <span>시나리오</span>
+      <button type="button" data-preset="base" id="preset-base">기본</button>
+      <button type="button" data-preset="turnover" id="preset-turnover">높은 퇴사율</button>
+      <button type="button" data-preset="shift" id="preset-shift">급변하는 환경</button>
+      <button type="button" data-preset="both" id="preset-both">둘 다</button>
+    </div>
+    <div class="row">
+      <label class="ctl" for="turnover"><span class="ctl-head">퇴사로 잃는 지식 (분기당)<output id="turnover-out"></output></span>
+        <input type="range" id="turnover" min="0" max="10" step="0.5" value="1"></label>
+      <label class="ctl" for="shift"><span class="ctl-head">환경이 바뀔 확률 (분기당)<output id="shift-out"></output></span>
+        <input type="range" id="shift" min="0" max="30" step="1" value="5"></label>
+      <label class="ctl" for="dual"><span class="ctl-head">D의 전문가 간 유대<output id="dual-out"></output></span>
+        <input type="range" id="dual" min="0" max="1" step="0.05" value="0.8"></label>
+      <label class="check" for="late"><input type="checkbox" id="late">후발 기업 E 추가</label>
+      <label class="ctl off" for="share" id="share-ctl"><span class="ctl-head">공유 데이터 플랫폼<output id="share-out"></output></span>
+        <input type="range" id="share" min="0" max="100" step="10" value="0" disabled></label>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="card chart-card">
+      <div class="chart-top">
+        <h2>점수 추이</h2>
+        <span class="sub">점수 = 유효한 지식 − 낡은 지식 (칸 수)</span>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="plot" id="plot" tabindex="0" aria-label="기업별 점수 추이 꺾은선 그래프. 값은 아래 표에서도 볼 수 있습니다.">
+        <svg id="chart" role="img" aria-hidden="true"></svg>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+      <div class="play">
+        <button type="button" class="primary" id="play">재생</button>
+        <input type="range" id="scrub" min="0" max="80" step="1" value="80" aria-label="분기">
+        <output id="scrub-out"></output>
+        <button type="button" id="reseed">새 난수</button>
+      </div>
+    </div>
+
+    <div class="maps" id="maps"></div>
+  </div>
+
+  <div class="card key">
+    <strong>지식 지도 읽는 법</strong>
+    <ul>
+      <li><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="var(--muted)"/></svg>사람이 가진 지식</li>
+      <li><svg width="14" height="14"><rect x="2.5" y="2.5" width="9" height="9" fill="none" stroke="var(--muted)" stroke-width="2"/></svg>담당자가 떠나고 AI에만 남은 지식</li>
+      <li><svg width="14" height="14"><circle cx="7" cy="7" r="3.5" fill="var(--muted)"/></svg>AI가 찾은 지식</li>
+      <li><svg width="14" height="14"><rect x="3" y="3" width="8" height="8" fill="var(--ink)"/></svg>낡은 지식 (점수 −1)</li>
+      <li><svg width="14" height="14"><circle cx="7" cy="7" r="5.5" fill="none" stroke="var(--ink2)" stroke-width="1"/></svg>방금 환경이 바뀐 구역</li>
+    </ul>
+    <span>색은 기업을 뜻합니다.</span>
+  </div>
+
+  <div class="card table-card">
+    <div class="chart-top">
+      <h2 id="table-title">결과</h2>
+      <span class="sub" id="avg-note">40회 평균은 난수만 바꿔 같은 조건을 40번 돌린 80분기 점수입니다.</span>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>기업</th><th>구성</th><th>유효한 지식</th><th>낡은 지식</th><th>데이터 유산</th><th>점수 (이 실행)</th><th>40회 평균 ± 표준편차</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <section>
+    <h2>이 모형의 규칙</h2>
+    <dl class="rules">
+      <div><dt>사람의 학습</dt><dd>매 분기 이미 아는 지식 근처에서만 새 지식을 찾습니다. 아는 분야가 넓어질수록 탐색할 가장자리도 넓어집니다.</dd></div>
+      <div><dt>AI의 학습</dt><dd>지식 공간 어디서든 찾고, 데이터 유산이 쌓일수록 성공 확률이 올라갑니다. AI를 쓰는 기업은 노력의 30%를 데이터에 돌려서 사람의 탐색이 그만큼 줄어듭니다.</dd></div>
+      <div><dt>암묵지의 가상화 (C, D, E)</dt><dd>사람이 가진 지식을 AI에 옮겨 담습니다. 담당자가 떠나도 회사에 남습니다.</dd></div>
+      <div><dt>퇴사</dt><dd>매 분기 사람이 가진 지식의 일정 비율이 사라집니다. AI에 담아둔 지식과 AI가 찾은 지식은 남습니다.</dd></div>
+      <div><dt>환경 변화</dt><dd>지식 공간의 한 구역이 바뀌면 그 구역의 지식은 낡은 지식이 되어 점수를 깎습니다. 사람은 낡은 지식을 분기당 25% 확률로 알아채고 버리지만, AI에만 있는 지식은 3%입니다.</dd></div>
+      <div><dt>인지적 이중성</dt><dd>전문가 간 유대가 강할수록 낡은 지식을 빨리 걸러내고, AI가 찾은 지식을 사람이 새 탐색의 발판으로 삼습니다. B와 C는 0.1로 고정이고 D와 E는 슬라이더 값을 따릅니다.</dd></div>
+      <div><dt>후발 기업 E</dt><dd>D와 같은 구조지만 AI와 데이터를 24분기 늦게 시작합니다. 공유 데이터 플랫폼은 D와의 데이터 격차를 매 분기 일부 메워줍니다.</dd></div>
+      <div><dt>출발점</dt><dd>모든 기업이 지식 공간 한가운데 같은 25칸에서 시작하고, 같은 환경 변화를 겪습니다.</dd></div>
+    </dl>
+    <p class="note">이 모형은 Pedota, M. (2026). Minds and machines: Rethinking absorptive capacity in the age of artificial intelligence. <i>Research Policy</i>, 55, 105600의 논리를 단순화한 것입니다. 확률과 비율은 임의로 정한 가정이어서 결과는 논문의 주장을 보여주는 예시이고 실증 근거가 아닙니다.</p>
+  </section>
+</div>
+
+<script>
+// ---- simulation core (shared verbatim with the page) ----
+const G = 26, N = G * G, T = 80;
+const H = 1, V = 2, A = 4, S = 8;           // human-held, virtualized, AI-derived, stale
+const P = {
+  humanDraws: 10, humanSigma: 2, humanP: 0.8,   // local associative search
+  aiDraws: 3,                                     // global data-driven search
+  dataEffort: 0.3, dataGrowth: 0.15, data0: 0.05, // effort split and data heritage growth
+  virtRate: 0.15,                                 // tacit -> virtual per quarter (x data)
+  shiftRadius: 5,                                 // size of an environment shift
+  humanDetect: 0.25, machineDetect: 0.03, dualDetect: 0.5,
+  baseDual: 0.1, lateStart: 24, shareRate: 0.1
+};
+function rng(seed) { let a = seed >>> 0; return function () { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function gauss(r) { return Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r()); }
+function firmDefs(o) {
+  const defs = [
+    { id: 'A', ai: false, virt: false, dual: 0, start: 0 },
+    { id: 'B', ai: true, virt: false, dual: P.baseDual, start: 0 },
+    { id: 'C', ai: true, virt: true, dual: P.baseDual, start: 0 },
+    { id: 'D', ai: true, virt: true, dual: o.dual, start: 0 }
+  ];
+  if (o.late) defs.push({ id: 'E', ai: true, virt: true, dual: o.dual, start: P.lateStart });
+  return defs;
+}
+function simulate(o) {   // o: {turnover, shift, dual, late, share, seed}
+  const defs = firmDefs(o), world = rng(o.seed * 7919 + 13);
+  const firms = defs.map((d, i) => {
+    const cells = new Uint8Array(N), c0 = Math.floor(G / 2) - 2;
+    for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) cells[(c0 + y) * G + c0 + x] = H;
+    return { d, cells, data: 0, r: rng(o.seed * 104729 + i * 31 + 7), hist: [], snaps: [] };
+  });
+  const shifts = [];
+  const record = t => firms.forEach(f => {
+    let valid = 0, stale = 0, human = 0, machine = 0, ai = 0;
+    for (let i = 0; i < N; i++) { const c = f.cells[i]; if (!c) continue; if (c & S) stale++; else { valid++; if (c & A && !(c & (H | V))) ai++; else if (c & H) human++; else machine++; } }
+    f.hist.push({ t, valid, stale, score: valid - stale, data: f.data, human, machine, ai });
+    f.snaps.push(f.cells.slice());
+  });
+  record(0);
+  for (let t = 1; t <= T; t++) {
+    // environment shift: one disc of the knowledge space changes for everyone
+    let disc = null;
+    if (world() < o.shift) { disc = { x: Math.floor(world() * G), y: Math.floor(world() * G) }; shifts.push({ t, x: disc.x, y: disc.y }); }
+    const leaderData = firms[3].data;
+    for (const f of firms) {
+      const d = f.d, r = f.r, cells = f.cells, aiOn = d.ai && t > d.start;
+      if (aiOn && f.data === 0) f.data = P.data0;
+      const effort = aiOn ? 1 - P.dataEffort : 1;
+      // 1. human associative search around what is already known
+      const hv = [], av = [];
+      for (let i = 0; i < N; i++) { const c = cells[i]; if (!c || c & S) continue; if (c & (H | V)) hv.push(i); else av.push(i); }
+      const wA = d.dual * av.length, draws = P.humanDraws * effort;
+      const nDraw = Math.floor(draws) + (r() < draws % 1 ? 1 : 0);
+      for (let k = 0; k < nDraw; k++) {
+        if (hv.length + av.length === 0) break;
+        const u = r() * (hv.length + wA);
+        const anchor = u < hv.length || !av.length ? (hv.length ? hv[Math.floor(r() * hv.length)] : av[Math.floor(r() * av.length)]) : av[Math.floor(r() * av.length)];
+        const x = (anchor % G) + Math.round(gauss(r) * P.humanSigma), y = Math.floor(anchor / G) + Math.round(gauss(r) * P.humanSigma);
+        if (x < 0 || y < 0 || x >= G || y >= G) continue;
+        const j = y * G + x;
+        if (!cells[j] && r() < P.humanP) cells[j] = H;
+      }
+      // 2. AI data-driven search anywhere in the space, scaled by data heritage
+      if (aiOn) {
+        for (let k = 0; k < P.aiDraws; k++) { const j = Math.floor(r() * N); if (!cells[j] && r() < f.data) cells[j] = A; }
+        f.data += P.dataGrowth * (f.data + 0.05) * (1 - f.data);
+        if (d.id === 'E' && o.share > 0) f.data += o.share * P.shareRate * Math.max(0, leaderData - f.data);
+        f.data = Math.min(1, f.data);
+      }
+      // 3. virtualization of tacit knowledge
+      if (aiOn && d.virt) for (let i = 0; i < N; i++) if ((cells[i] & H) && !(cells[i] & V) && r() < P.virtRate * f.data) cells[i] |= V;
+      // 4. turnover: people leave with what they know
+      if (o.turnover > 0) for (let i = 0; i < N; i++) if ((cells[i] & H) && r() < o.turnover) { cells[i] &= ~H; if (!(cells[i] & (V | A))) cells[i] = 0; }
+      // 5. environment shift makes held knowledge stale
+      if (disc) for (let i = 0; i < N; i++) if (cells[i]) { const dx = (i % G) - disc.x, dy = Math.floor(i / G) - disc.y; if (dx * dx + dy * dy <= P.shiftRadius * P.shiftRadius) cells[i] |= S; }
+      // 6. detection: stale knowledge is noticed and dropped
+      for (let i = 0; i < N; i++) if (cells[i] & S) {
+        const p = (cells[i] & H) ? P.humanDetect + d.dual * P.dualDetect : P.machineDetect + d.dual * P.dualDetect;
+        if (r() < p) cells[i] = 0;
+      }
+    }
+    record(t);
+  }
+  return { firms: firms.map(f => ({ id: f.d.id, hist: f.hist, snaps: f.snaps })), shifts };
+}
+function average(o, runs) {
+  const acc = {};
+  for (let s = 1; s <= runs; s++) for (const f of simulate({ ...o, seed: o.seed * 1000 + s }).firms) (acc[f.id] = acc[f.id] || []).push(f.hist[T].score);
+  const out = {};
+  for (const id in acc) { const a = acc[id], m = a.reduce((x, y) => x + y, 0) / a.length; out[id] = { mean: m, sd: Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / a.length) }; }
+  return out;
+}
+if (typeof module !== 'undefined') module.exports = { simulate, average, G, N, T, P, H, V, A, S };
+
+
+// ---- page ----
+const FIRMS = {
+  A: { name: '전통 기업', sub: '사람의 학습만', color: '--s1' },
+  B: { name: '데이터 기업', sub: 'A + 데이터 유산', color: '--s2' },
+  C: { name: '가상화 기업', sub: 'B + 암묵지의 가상화', color: '--s3' },
+  D: { name: '이중 학습 기업', sub: 'C + 인지적 이중성', color: '--s4' },
+  E: { name: '후발 기업', sub: 'D와 같은 구조, 24분기 늦게 시작', color: '--s5' }
+};
+const PRESETS = { base: [1, 5], turnover: [6, 5], shift: [1, 25], both: [6, 25] };
+const $ = id => document.getElementById(id);
+const NS = 'http://www.w3.org/2000/svg';
+const svgEl = (name, attrs, text) => { const e = document.createElementNS(NS, name); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
+const htmlEl = (name, props, kids) => { const e = Object.assign(document.createElement(name), props || {}); (kids || []).forEach(k => e.append(k)); return e; };
+const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+const state = { seed: 1, t: T, run: null, avg: null, timer: null, hoverQ: null };
+const opts = () => ({ turnover: +$('turnover').value / 100, shift: +$('shift').value / 100, dual: +$('dual').value, late: $('late').checked, share: +$('share').value / 100, seed: state.seed });
+
+function syncOutputs() {
+  $('turnover-out').textContent = (+$('turnover').value).toFixed(1) + '%';
+  $('shift-out').textContent = $('shift').value + '%';
+  $('dual-out').textContent = (+$('dual').value).toFixed(2);
+  $('share-out').textContent = $('share').value + '%';
+  $('share').disabled = !$('late').checked;
+  $('share-ctl').classList.toggle('off', !$('late').checked);
+  for (const b of document.querySelectorAll('[data-preset]')) { const p = PRESETS[b.dataset.preset]; b.setAttribute('aria-pressed', String(+$('turnover').value === p[0] && +$('shift').value === p[1])); }
+}
+
+let avgTimer = null;
+function recompute() {
+  stop();
+  state.run = simulate(opts());
+  state.t = T; state.avg = null; state.hoverQ = null;
+  buildMaps(); buildLegend(); renderAll();
+  clearTimeout(avgTimer);
+  avgTimer = setTimeout(() => { state.avg = average({ ...opts(), seed: 1 }, 40); renderTable(); }, 180);
+}
+
+function buildLegend() {
+  const lg = $('legend'); lg.replaceChildren();
+  for (const f of state.run.firms) { const i = htmlEl('i'); i.style.borderColor = `var(${FIRMS[f.id].color})`; lg.append(htmlEl('span', {}, [i, f.id + ' ' + FIRMS[f.id].name])); }
+  lg.append(htmlEl('span', {}, [htmlEl('i', { className: 'shift' }), '환경 변화']));
+}
+
+function buildMaps() {
+  const box = $('maps'); box.replaceChildren(); const five = state.run.firms.length === 5; box.classList.toggle('five', five); $('stage').classList.toggle('five', five);
+  for (const f of state.run.firms) {
+    const m = FIRMS[f.id], sw = htmlEl('i'); sw.style.background = `var(${m.color})`;
+    box.append(htmlEl('div', { className: 'card map' }, [
+      htmlEl('div', { className: 'map-head' }, [htmlEl('span', { className: 'map-name' }, [sw, f.id + ' ' + m.name]), htmlEl('span', { className: 'map-score', id: 'score-' + f.id })]),
+      htmlEl('div', { className: 'map-sub', textContent: m.sub }),
+      htmlEl('canvas', { id: 'cv-' + f.id })
+    ]));
+  }
+}
+
+function renderMaps() {
+  const ink = cssVar('--ink'), ink2 = cssVar('--ink2'), surface = cssVar('--surface'), dpr = window.devicePixelRatio || 1;
+  for (const f of state.run.firms) {
+    const cv = $('cv-' + f.id), w = cv.clientWidth; if (!w) continue;
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(w * dpr); }
+    const ctx = cv.getContext('2d'), cs = cv.width / G, color = cssVar(FIRMS[f.id].color), cells = f.snaps[state.t];
+    ctx.fillStyle = surface; ctx.fillRect(0, 0, cv.width, cv.height);
+    for (let i = 0; i < N; i++) {
+      const c = cells[i]; if (!c) continue;
+      const x = (i % G) * cs, y = Math.floor(i / G) * cs;
+      if (c & S) { ctx.fillStyle = ink; const s = cs * 0.6; ctx.fillRect(x + (cs - s) / 2, y + (cs - s) / 2, s, s); }
+      else if (c & H) { ctx.fillStyle = color; const s = cs * 0.84; ctx.fillRect(x + (cs - s) / 2, y + (cs - s) / 2, s, s); }
+      else if (c & V) { ctx.strokeStyle = color; ctx.lineWidth = Math.max(1, cs * 0.17); const s = cs * 0.62; ctx.strokeRect(x + (cs - s) / 2, y + (cs - s) / 2, s, s); }
+      else { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x + cs / 2, y + cs / 2, cs * 0.27, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.strokeStyle = ink2; ctx.lineWidth = Math.max(1, dpr);
+    for (const s of state.run.shifts) if (s.t <= state.t && state.t - s.t < 3) { ctx.beginPath(); ctx.arc((s.x + .5) * cs, (s.y + .5) * cs, (P.shiftRadius + .5) * cs, 0, Math.PI * 2); ctx.stroke(); }
+    $('score-' + f.id).textContent = f.hist[state.t].score;
+  }
+}
+
+let geom = null;
+function renderChart() {
+  const svg = $('chart'), W = $('plot').clientWidth; if (!W) return;
+  const Ht = Math.round(Math.min(430, Math.max(250, W * 0.64)));
+  svg.setAttribute('viewBox', `0 0 ${W} ${Ht}`); svg.setAttribute('height', Ht); svg.replaceChildren();
+  const m = { l: 36, r: 62, t: 10, b: 26 }, pw = W - m.l - m.r, ph = Ht - m.t - m.b;
+  let hi = 100, lo = 0;
+  for (const f of state.run.firms) for (const h of f.hist) { hi = Math.max(hi, h.score); lo = Math.min(lo, h.score); }
+  const step = hi - lo <= 300 ? 50 : 100; hi = Math.ceil(hi / step) * step; lo = Math.floor(lo / step) * step;
+  const x = q => m.l + q / T * pw, y = v => m.t + (1 - (v - lo) / (hi - lo)) * ph;
+  geom = { m, pw, x, y, W, Ht };
+  for (let v = lo; v <= hi; v += step) {
+    svg.append(svgEl('line', { x1: m.l, x2: m.l + pw, y1: y(v), y2: y(v), style: `stroke:var(${v === 0 ? '--axis' : '--grid'})`, 'stroke-width': 1 }));
+    svg.append(svgEl('text', { x: m.l - 8, y: y(v) + 4, 'text-anchor': 'end' }, v));
+  }
+  for (let q = 0; q <= T; q += 20) svg.append(svgEl('text', { x: x(q), y: Ht - 6, 'text-anchor': q === T ? 'end' : 'middle' }, q === T ? q + '분기' : q));
+  for (const s of state.run.shifts) if (s.t <= state.t) svg.append(svgEl('line', { x1: x(s.t), x2: x(s.t), y1: m.t, y2: m.t + ph, style: 'stroke:var(--axis)', 'stroke-width': 1 }));
+  const ends = [];
+  for (const f of state.run.firms) {
+    const col = `var(${FIRMS[f.id].color})`; let d = '';
+    for (let q = 0; q <= state.t; q++) d += (q ? 'L' : 'M') + x(q).toFixed(1) + ' ' + y(f.hist[q].score).toFixed(1);
+    svg.append(svgEl('path', { d, fill: 'none', style: `stroke:${col}`, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    ends.push({ id: f.id, col, y: y(f.hist[state.t].score), score: f.hist[state.t].score });
+  }
+  // end labels: spread apart when lines converge, joined to their dot by a leader line
+  ends.sort((a, b) => a.y - b.y); ends.forEach(e => e.ly = e.y);
+  for (let pass = 0; pass < 8; pass++) for (let i = 1; i < ends.length; i++) { const gap = ends[i].ly - ends[i - 1].ly; if (gap < 15) { const push = (15 - gap) / 2; ends[i - 1].ly -= push; ends[i].ly += push; } }
+  const shiftDown = Math.max(0, m.t + 6 - ends[0].ly); ends.forEach(e => e.ly += shiftDown);
+  const ex = x(state.t);
+  for (const e of ends) {
+    if (Math.abs(e.ly - e.y) > 3) svg.append(svgEl('line', { x1: ex + 5, y1: e.y, x2: ex + 13, y2: e.ly, style: 'stroke:var(--muted)', 'stroke-width': 1 }));
+    svg.append(svgEl('circle', { cx: ex, cy: e.y, r: 4.5, style: `fill:${e.col};stroke:var(--surface)`, 'stroke-width': 2 }));
+    svg.append(svgEl('text', { x: ex + 16, y: e.ly + 4, class: 'end' }, e.id + ' ' + e.score));
+  }
+  svg.append(svgEl('g', { id: 'hover' }));
+  renderHover();
+}
+
+function renderHover() {
+  const g = document.getElementById('hover'), tip = $('tip'); if (!g) return;
+  g.replaceChildren();
+  if (state.hoverQ == null) { tip.hidden = true; return; }
+  const q = Math.min(state.hoverQ, state.t), { m, x, y, W, Ht } = geom;
+  g.append(svgEl('line', { x1: x(q), x2: x(q), y1: m.t, y2: Ht - m.b, style: 'stroke:var(--ink2)', 'stroke-width': 1 }));
+  const rows = state.run.firms.map(f => ({ id: f.id, score: f.hist[q].score })).sort((a, b) => b.score - a.score);
+  for (const r of rows) g.append(svgEl('circle', { cx: x(q), cy: y(r.score), r: 4, style: `fill:var(${FIRMS[r.id].color});stroke:var(--surface)`, 'stroke-width': 2 }));
+  tip.replaceChildren(htmlEl('b', { textContent: q + '분기' }));
+  for (const r of rows) { const k = htmlEl('i'); k.style.borderColor = `var(${FIRMS[r.id].color})`; tip.append(htmlEl('div', {}, [k, htmlEl('strong', { textContent: r.score }), r.id + ' ' + FIRMS[r.id].name])); }
+  tip.hidden = false;
+  const tw = tip.offsetWidth, left = x(q) + 12 + tw > W ? x(q) - 12 - tw : x(q) + 12;
+  tip.style.left = Math.max(0, left) + 'px';
+}
+
+function renderTable() {
+  const tb = $('tbody'); tb.replaceChildren();
+  $('table-title').textContent = `결과 (${state.t}분기 시점)`;
+  for (const f of state.run.firms) {
+    const h = f.hist[state.t], sw = htmlEl('i'); sw.style.background = `var(${FIRMS[f.id].color})`;
+    const a = state.avg && state.avg[f.id];
+    tb.append(htmlEl('tr', {}, [
+      htmlEl('td', {}, [sw, f.id + ' ' + FIRMS[f.id].name]), htmlEl('td', { textContent: FIRMS[f.id].sub }),
+      htmlEl('td', { textContent: h.valid }), htmlEl('td', { textContent: h.stale }),
+      htmlEl('td', { textContent: f.id === 'A' ? '없음' : Math.round(h.data * 100) + '%' }),
+      htmlEl('td', { textContent: h.score }), htmlEl('td', { textContent: a ? `${a.mean.toFixed(0)} ± ${a.sd.toFixed(0)}` : '계산 중' })
+    ]));
+  }
+}
+
+function renderAll() {
+  $('scrub').value = state.t; $('scrub-out').textContent = state.t + ' / ' + T + '분기';
+  renderChart(); renderMaps(); renderTable();
+}
+
+function stop() { clearInterval(state.timer); state.timer = null; $('play').textContent = '재생'; }
+function play() {
+  if (state.timer) { stop(); return; }
+  if (state.t >= T) state.t = 0;
+  $('play').textContent = '일시정지'; renderAll();
+  state.timer = setInterval(() => { state.t++; renderAll(); if (state.t >= T) stop(); }, 110);
+}
+
+for (const id of ['turnover', 'shift', 'dual', 'share']) $(id).addEventListener('input', () => { syncOutputs(); recompute(); });
+$('late').addEventListener('change', () => { syncOutputs(); recompute(); });
+for (const b of document.querySelectorAll('[data-preset]')) b.addEventListener('click', () => { const p = PRESETS[b.dataset.preset]; $('turnover').value = p[0]; $('shift').value = p[1]; syncOutputs(); recompute(); });
+$('play').addEventListener('click', play);
+$('scrub').addEventListener('input', () => { stop(); state.t = +$('scrub').value; renderAll(); });
+$('reseed').addEventListener('click', () => { state.seed++; recompute(); });
+const plot = $('plot');
+plot.addEventListener('pointermove', e => { if (!geom) return; const r = plot.getBoundingClientRect(); state.hoverQ = Math.max(0, Math.min(T, Math.round((e.clientX - r.left - geom.m.l) / geom.pw * T))); renderHover(); });
+plot.addEventListener('pointerleave', () => { state.hoverQ = null; renderHover(); });
+plot.addEventListener('focus', () => { if (state.hoverQ == null) { state.hoverQ = state.t; renderHover(); } });
+plot.addEventListener('blur', () => { state.hoverQ = null; renderHover(); });
+plot.addEventListener('keydown', e => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); state.hoverQ = Math.max(0, Math.min(state.t, (state.hoverQ ?? state.t) + (e.key === 'ArrowLeft' ? -1 : 1))); renderHover(); });
+new ResizeObserver(() => { if (state.run) { renderChart(); renderMaps(); } }).observe($('plot'));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => renderAll());
+new MutationObserver(() => renderAll()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+syncOutputs(); recompute();
+</script>
+
+</body>
+</html>
