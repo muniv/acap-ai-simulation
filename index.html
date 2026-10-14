@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-<title>네 회사의 경주</title>
+<title>네 햄버거 체인의 경주</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@700&display=swap">
 <style>
 /* Layout: one control strip on top, score chart left, small-multiple knowledge maps right, table and rules below. */
@@ -130,8 +130,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
 
 <div class="page">
   <header>
-    <h1>네 회사의 경주</h1>
-    <p class="lede">같은 지식에서 출발한 회사들이 80분기 동안 새 지식을 흡수합니다. 사람만 배우는 회사와 AI가 함께 배우는 회사는 퇴사와 환경 변화 앞에서 어떻게 달라질까요. Pedota (2026)의 확장된 흡수역량 모형을 단순한 규칙으로 옮긴 예시 시뮬레이션입니다.</p>
+    <h1>네 햄버거 체인의 경주</h1>
+    <p class="lede">같은 레시피 25개로 개업한 햄버거 체인 넷이 80분기 동안 새 레시피를 익힙니다. 조리사만 배우는 체인과 AI가 함께 배우는 체인은 조리사의 이직과 입맛 변화 앞에서 어떻게 달라질까요. Pedota (2026)의 확장된 흡수역량 모형을 단순한 규칙으로 옮긴 예시 시뮬레이션입니다.</p>
   </header>
 
   <div class="card controls">
@@ -143,14 +143,14 @@ section { display: flex; flex-direction: column; gap: 12px; }
       <button type="button" data-preset="both" id="preset-both">둘 다</button>
     </div>
     <div class="row">
-      <label class="ctl" for="turnover"><span class="ctl-head">퇴사로 잃는 지식 (분기당)<output id="turnover-out"></output></span>
+      <label class="ctl" for="turnover"><span class="ctl-head">이직으로 잃는 노하우 (분기당)<output id="turnover-out"></output></span>
         <input type="range" id="turnover" min="0" max="10" step="0.5" value="1"></label>
-      <label class="ctl" for="shift"><span class="ctl-head">환경이 바뀔 확률 (분기당)<output id="shift-out"></output></span>
+      <label class="ctl" for="shift"><span class="ctl-head">입맛·재료가 바뀔 확률 (분기당)<output id="shift-out"></output></span>
         <input type="range" id="shift" min="0" max="30" step="1" value="5"></label>
-      <label class="ctl" for="dual"><span class="ctl-head">D의 전문가 간 유대<output id="dual-out"></output></span>
+      <label class="ctl" for="dual"><span class="ctl-head">D의 조리사–데이터 과학자 유대<output id="dual-out"></output></span>
         <input type="range" id="dual" min="0" max="1" step="0.05" value="0.8"></label>
-      <label class="check" for="late"><input type="checkbox" id="late">후발 기업 E 추가</label>
-      <label class="ctl off" for="share" id="share-ctl"><span class="ctl-head">공유 데이터 플랫폼<output id="share-out"></output></span>
+      <label class="check" for="late"><input type="checkbox" id="late">후발 체인 E 추가</label>
+      <label class="ctl off" for="share" id="share-ctl"><span class="ctl-head">공유 데이터 플랫폼 (E용)<output id="share-out"></output></span>
         <input type="range" id="share" min="0" max="100" step="10" value="0" disabled></label>
     </div>
   </div>
@@ -159,7 +159,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     <div class="card chart-card">
       <div class="chart-top">
         <h2>점수 추이</h2>
-        <span class="sub">점수 = 유효한 지식 − 낡은 지식 (칸 수)</span>
+        <span class="sub">점수 = 쓸 수 있는 레시피 − 낡은 레시피 (칸 수)</span>
       </div>
       <div class="legend" id="legend"></div>
       <div class="plot" id="plot" tabindex="0" aria-label="기업별 점수 추이 꺾은선 그래프. 값은 아래 표에서도 볼 수 있습니다.">
@@ -180,13 +180,13 @@ section { display: flex; flex-direction: column; gap: 12px; }
   <div class="card key">
     <strong>지식 지도 읽는 법</strong>
     <ul>
-      <li><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="var(--muted)"/></svg>사람이 가진 지식</li>
-      <li><svg width="14" height="14"><rect x="2.5" y="2.5" width="9" height="9" fill="none" stroke="var(--muted)" stroke-width="2"/></svg>담당자가 떠나고 AI에만 남은 지식</li>
-      <li><svg width="14" height="14"><circle cx="7" cy="7" r="3.5" fill="var(--muted)"/></svg>AI가 찾은 지식</li>
-      <li><svg width="14" height="14"><rect x="3" y="3" width="8" height="8" fill="var(--ink)"/></svg>낡은 지식 (점수 −1)</li>
-      <li><svg width="14" height="14"><circle cx="7" cy="7" r="5.5" fill="none" stroke="var(--ink2)" stroke-width="1"/></svg>방금 환경이 바뀐 구역</li>
+      <li><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="var(--muted)"/></svg>조리사가 가진 레시피</li>
+      <li><svg width="14" height="14"><rect x="2.5" y="2.5" width="9" height="9" fill="none" stroke="var(--muted)" stroke-width="2"/></svg>조리사가 떠나고 AI에만 남은 레시피</li>
+      <li><svg width="14" height="14"><circle cx="7" cy="7" r="3.5" fill="var(--muted)"/></svg>AI가 찾은 레시피</li>
+      <li><svg width="14" height="14"><rect x="3" y="3" width="8" height="8" fill="var(--ink)"/></svg>낡은 레시피 (점수 −1)</li>
+      <li><svg width="14" height="14"><circle cx="7" cy="7" r="5.5" fill="none" stroke="var(--ink2)" stroke-width="1"/></svg>방금 입맛이 바뀐 구역</li>
     </ul>
-    <span>색은 기업을 뜻합니다.</span>
+    <span>색은 체인을 뜻합니다.</span>
   </div>
 
   <div class="card table-card">
@@ -196,7 +196,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     </div>
     <div class="scroll">
       <table>
-        <thead><tr><th>기업</th><th>구성</th><th>유효한 지식</th><th>낡은 지식</th><th>데이터 유산</th><th>점수 (이 실행)</th><th>40회 평균 ± 표준편차</th></tr></thead>
+        <thead><tr><th>체인</th><th>구성</th><th>쓸 수 있는 레시피</th><th>낡은 레시피</th><th>데이터 유산</th><th>점수 (이 실행)</th><th>40회 평균 ± 표준편차</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
@@ -205,14 +205,14 @@ section { display: flex; flex-direction: column; gap: 12px; }
   <section>
     <h2>이 모형의 규칙</h2>
     <dl class="rules">
-      <div><dt>사람의 학습</dt><dd>매 분기 이미 아는 지식 근처에서만 새 지식을 찾습니다. 아는 분야가 넓어질수록 탐색할 가장자리도 넓어집니다.</dd></div>
-      <div><dt>AI의 학습</dt><dd>지식 공간 어디서든 찾고, 데이터 유산이 쌓일수록 성공 확률이 올라갑니다. AI를 쓰는 기업은 노력의 30%를 데이터에 돌려서 사람의 탐색이 그만큼 줄어듭니다.</dd></div>
-      <div><dt>암묵지의 가상화 (C, D, E)</dt><dd>사람이 가진 지식을 AI에 옮겨 담습니다. 담당자가 떠나도 회사에 남습니다.</dd></div>
-      <div><dt>퇴사</dt><dd>매 분기 사람이 가진 지식의 일정 비율이 사라집니다. AI에 담아둔 지식과 AI가 찾은 지식은 남습니다.</dd></div>
-      <div><dt>환경 변화</dt><dd>지식 공간의 한 구역이 바뀌면 그 구역의 지식은 낡은 지식이 되어 점수를 깎습니다. 사람은 낡은 지식을 분기당 25% 확률로 알아채고 버리지만, AI에만 있는 지식은 3%입니다.</dd></div>
-      <div><dt>인지적 이중성</dt><dd>전문가 간 유대가 강할수록 낡은 지식을 빨리 걸러내고, AI가 찾은 지식을 사람이 새 탐색의 발판으로 삼습니다. B와 C는 0.1로 고정이고 D와 E는 슬라이더 값을 따릅니다.</dd></div>
-      <div><dt>후발 기업 E</dt><dd>D와 같은 구조지만 AI와 데이터를 24분기 늦게 시작합니다. 공유 데이터 플랫폼은 D와의 데이터 격차를 매 분기 일부 메워줍니다.</dd></div>
-      <div><dt>출발점</dt><dd>모든 기업이 지식 공간 한가운데 같은 25칸에서 시작하고, 같은 환경 변화를 겪습니다.</dd></div>
+      <div><dt>조리사의 학습</dt><dd>매 분기 이미 아는 레시피 근처에서만 새 레시피를 찾습니다. 아는 메뉴가 넓어질수록 시도해 볼 가장자리도 넓어집니다.</dd></div>
+      <div><dt>AI의 학습</dt><dd>레시피 지도 어디서든 찾고, 주문·그릴 데이터가 쌓일수록 성공 확률이 올라갑니다. AI를 쓰는 체인은 노력의 30%를 데이터 모으기에 돌려서 조리사의 탐색이 그만큼 줄어듭니다.</dd></div>
+      <div><dt>비법의 가상화 (C, D, E)</dt><dd>그릴 장인의 감을 AI에 옮겨 담습니다. 장인이 떠나도 체인에 남습니다. (논문의 '암묵지의 가상화')</dd></div>
+      <div><dt>이직</dt><dd>매 분기 조리사가 가진 레시피의 일정 비율이 사라집니다. AI에 담아둔 레시피와 AI가 찾은 레시피는 남습니다.</dd></div>
+      <div><dt>입맛·재료 변화</dt><dd>손님 입맛이 바뀌거나 새 패티가 나오면 그 구역의 레시피는 낡은 것이 되어 점수를 깎습니다. 조리사는 낡은 레시피를 분기당 25% 확률로 알아채고 버리지만, AI에만 있는 레시피는 3%입니다.</dd></div>
+      <div><dt>인지적 이중성</dt><dd>조리사와 데이터 과학자의 유대가 강할수록 낡은 레시피를 빨리 걸러내고, AI가 찾은 레시피를 조리사가 새 시도의 발판으로 삼습니다. B와 C는 0.1로 고정이고 D와 E는 슬라이더 값을 따릅니다.</dd></div>
+      <div><dt>후발 체인 E</dt><dd>D와 같은 구조지만 AI와 데이터를 24분기 늦게 시작합니다. 공유 데이터 플랫폼은 D와의 데이터 격차를 매 분기 일부 메워줍니다. (논문 정책 파트의 '격차 확대' 우려를 보는 옵션)</dd></div>
+      <div><dt>출발점</dt><dd>모든 체인이 레시피 지도 한가운데 같은 25칸에서 시작하고, 같은 입맛 변화를 겪습니다.</dd></div>
     </dl>
     <p class="note">이 모형은 Pedota, M. (2026). Minds and machines: Rethinking absorptive capacity in the age of artificial intelligence. <i>Research Policy</i>, 55, 105600의 논리를 단순화한 것입니다. 확률과 비율은 임의로 정한 가정이어서 결과는 논문의 주장을 보여주는 예시이고 실증 근거가 아닙니다.</p>
   </section>
@@ -316,11 +316,11 @@ if (typeof module !== 'undefined') module.exports = { simulate, average, G, N, T
 
 // ---- page ----
 const FIRMS = {
-  A: { name: '전통 기업', sub: '사람의 학습만', color: '--s1' },
-  B: { name: '데이터 기업', sub: 'A + 데이터 유산', color: '--s2' },
-  C: { name: '가상화 기업', sub: 'B + 암묵지의 가상화', color: '--s3' },
-  D: { name: '이중 학습 기업', sub: 'C + 인지적 이중성', color: '--s4' },
-  E: { name: '후발 기업', sub: 'D와 같은 구조, 24분기 늦게 시작', color: '--s5' }
+  A: { name: '할아버지 그릴', sub: '조리사만 배움', color: '--s1' },
+  B: { name: '빅데이터 버거', sub: 'A + 데이터 유산', color: '--s2' },
+  C: { name: '비법 버거', sub: 'B + 장인의 비법을 AI에 저장', color: '--s3' },
+  D: { name: '드림팀 버거', sub: 'C + 조리사와 AI가 서로 고침', color: '--s4' },
+  E: { name: '후발 버거', sub: 'D와 같은 구조, 24분기 늦게 개업', color: '--s5' }
 };
 const PRESETS = { base: [1, 5], turnover: [6, 5], shift: [1, 25], both: [6, 25] };
 const $ = id => document.getElementById(id);
