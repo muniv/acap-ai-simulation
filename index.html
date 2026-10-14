@@ -61,6 +61,14 @@ button.primary:hover { opacity: .88; }
 button[aria-pressed="true"] { background: var(--wash); border-color: var(--ink2); }
 :is(button, input, .plot):focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
 
+/* street */
+.street-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.street { min-width: 0; }
+.street svg { display: block; width: 100%; height: auto; }
+.street text { font-family: var(--font-body); }
+.ticker { margin: 0; font-size: 13px; color: var(--ink2); min-height: 1.6em; }
+.ticker b { color: var(--ink); font-weight: 600; }
+
 /* stage */
 .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 20px; align-items: start; }
 .stage.five { grid-template-columns: minmax(0, 1fr); }
@@ -138,8 +146,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
     <div class="presets" role="group" aria-label="시나리오">
       <span>시나리오</span>
       <button type="button" data-preset="base" id="preset-base">기본</button>
-      <button type="button" data-preset="turnover" id="preset-turnover">높은 퇴사율</button>
-      <button type="button" data-preset="shift" id="preset-shift">급변하는 환경</button>
+      <button type="button" data-preset="turnover" id="preset-turnover">조리사 이직 많음</button>
+      <button type="button" data-preset="shift" id="preset-shift">입맛이 자주 바뀜</button>
       <button type="button" data-preset="both" id="preset-both">둘 다</button>
     </div>
     <div class="row">
@@ -153,6 +161,15 @@ section { display: flex; flex-direction: column; gap: 12px; }
       <label class="ctl off" for="share" id="share-ctl"><span class="ctl-head">공유 데이터 플랫폼 (E용)<output id="share-out"></output></span>
         <input type="range" id="share" min="0" max="100" step="10" value="0" disabled></label>
     </div>
+  </div>
+
+  <div class="card street-card">
+    <div class="chart-top">
+      <h2>햄버거 거리</h2>
+      <span class="sub">조리사 한 명 = 레시피 약 25개 · 로봇 = AI · 영수증 더미 = 데이터 유산 · 안경 쓴 사람 = 데이터 과학자 · 문밖으로 나가는 조리사 = 이직</span>
+    </div>
+    <div class="street" id="street"><svg id="street-svg" role="img" aria-label="네 햄버거 체인의 현재 상태 그림"></svg></div>
+    <p class="ticker" id="ticker"></p>
   </div>
 
   <div class="stage" id="stage">
@@ -178,7 +195,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
   </div>
 
   <div class="card key">
-    <strong>지식 지도 읽는 법</strong>
+    <strong>레시피 지도 읽는 법 (오른쪽 작은 지도)</strong>
     <ul>
       <li><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="var(--muted)"/></svg>조리사가 가진 레시피</li>
       <li><svg width="14" height="14"><rect x="2.5" y="2.5" width="9" height="9" fill="none" stroke="var(--muted)" stroke-width="2"/></svg>조리사가 떠나고 AI에만 남은 레시피</li>
@@ -251,10 +268,11 @@ function simulate(o) {   // o: {turnover, shift, dual, late, share, seed}
     return { d, cells, data: 0, r: rng(o.seed * 104729 + i * 31 + 7), hist: [], snaps: [] };
   });
   const shifts = [];
+  const zeroEv = () => ({ left: 0, leftKept: 0, virt: 0, staleNew: 0, dropped: 0, aiNew: 0, humanNew: 0 });
   const record = t => firms.forEach(f => {
     let valid = 0, stale = 0, human = 0, machine = 0, ai = 0;
     for (let i = 0; i < N; i++) { const c = f.cells[i]; if (!c) continue; if (c & S) stale++; else { valid++; if (c & A && !(c & (H | V))) ai++; else if (c & H) human++; else machine++; } }
-    f.hist.push({ t, valid, stale, score: valid - stale, data: f.data, human, machine, ai });
+    f.hist.push({ t, valid, stale, score: valid - stale, data: f.data, human, machine, ai, aiOn: f.d.ai && t > f.d.start, dualOn: f.d.dual >= 0.3, virtOn: f.d.virt, ev: f.ev || zeroEv() });
     f.snaps.push(f.cells.slice());
   });
   record(0);
@@ -265,6 +283,7 @@ function simulate(o) {   // o: {turnover, shift, dual, late, share, seed}
     const leaderData = firms[3].data;
     for (const f of firms) {
       const d = f.d, r = f.r, cells = f.cells, aiOn = d.ai && t > d.start;
+      const ev = f.ev = zeroEv();
       if (aiOn && f.data === 0) f.data = P.data0;
       const effort = aiOn ? 1 - P.dataEffort : 1;
       // 1. human associative search around what is already known
@@ -279,25 +298,25 @@ function simulate(o) {   // o: {turnover, shift, dual, late, share, seed}
         const x = (anchor % G) + Math.round(gauss(r) * P.humanSigma), y = Math.floor(anchor / G) + Math.round(gauss(r) * P.humanSigma);
         if (x < 0 || y < 0 || x >= G || y >= G) continue;
         const j = y * G + x;
-        if (!cells[j] && r() < P.humanP) cells[j] = H;
+        if (!cells[j] && r() < P.humanP) { cells[j] = H; ev.humanNew++; }
       }
       // 2. AI data-driven search anywhere in the space, scaled by data heritage
       if (aiOn) {
-        for (let k = 0; k < P.aiDraws; k++) { const j = Math.floor(r() * N); if (!cells[j] && r() < f.data) cells[j] = A; }
+        for (let k = 0; k < P.aiDraws; k++) { const j = Math.floor(r() * N); if (!cells[j] && r() < f.data) { cells[j] = A; ev.aiNew++; } }
         f.data += P.dataGrowth * (f.data + 0.05) * (1 - f.data);
         if (d.id === 'E' && o.share > 0) f.data += o.share * P.shareRate * Math.max(0, leaderData - f.data);
         f.data = Math.min(1, f.data);
       }
       // 3. virtualization of tacit knowledge
-      if (aiOn && d.virt) for (let i = 0; i < N; i++) if ((cells[i] & H) && !(cells[i] & V) && r() < P.virtRate * f.data) cells[i] |= V;
+      if (aiOn && d.virt) for (let i = 0; i < N; i++) if ((cells[i] & H) && !(cells[i] & V) && r() < P.virtRate * f.data) { cells[i] |= V; ev.virt++; }
       // 4. turnover: people leave with what they know
-      if (o.turnover > 0) for (let i = 0; i < N; i++) if ((cells[i] & H) && r() < o.turnover) { cells[i] &= ~H; if (!(cells[i] & (V | A))) cells[i] = 0; }
+      if (o.turnover > 0) for (let i = 0; i < N; i++) if ((cells[i] & H) && r() < o.turnover) { cells[i] &= ~H; ev.left++; if (cells[i] & (V | A)) ev.leftKept++; else cells[i] = 0; }
       // 5. environment shift makes held knowledge stale
-      if (disc) for (let i = 0; i < N; i++) if (cells[i]) { const dx = (i % G) - disc.x, dy = Math.floor(i / G) - disc.y; if (dx * dx + dy * dy <= P.shiftRadius * P.shiftRadius) cells[i] |= S; }
+      if (disc) for (let i = 0; i < N; i++) if (cells[i]) { const dx = (i % G) - disc.x, dy = Math.floor(i / G) - disc.y; if (dx * dx + dy * dy <= P.shiftRadius * P.shiftRadius) { if (!(cells[i] & S)) ev.staleNew++; cells[i] |= S; } }
       // 6. detection: stale knowledge is noticed and dropped
       for (let i = 0; i < N; i++) if (cells[i] & S) {
         const p = (cells[i] & H) ? P.humanDetect + d.dual * P.dualDetect : P.machineDetect + d.dual * P.dualDetect;
-        if (r() < p) cells[i] = 0;
+        if (r() < p) { cells[i] = 0; ev.dropped++; }
       }
     }
     record(t);
@@ -355,7 +374,7 @@ function recompute() {
 function buildLegend() {
   const lg = $('legend'); lg.replaceChildren();
   for (const f of state.run.firms) { const i = htmlEl('i'); i.style.borderColor = `var(${FIRMS[f.id].color})`; lg.append(htmlEl('span', {}, [i, f.id + ' ' + FIRMS[f.id].name])); }
-  lg.append(htmlEl('span', {}, [htmlEl('i', { className: 'shift' }), '환경 변화']));
+  lg.append(htmlEl('span', {}, [htmlEl('i', { className: 'shift' }), '입맛 변화']));
 }
 
 function buildMaps() {
@@ -459,9 +478,135 @@ function renderTable() {
   }
 }
 
+// ---- street scene: one shop per chain, redrawn from hist[t] ----
+const SHOP_W = 250, SHOP_H = 330;
+function cookFig(x, y, col, opts = {}) {
+  // a 30px-tall cook: hat, head, body. opts.walk draws legs mid-stride; opts.card draws a recipe card in hand
+  const g = [];
+  g.push(`<g transform="translate(${x} ${y})">`);
+  g.push(`<rect x="-7" y="-30" width="14" height="9" rx="3" fill="#fff" stroke="currentColor" stroke-width="1"/>`);
+  g.push(`<rect x="-9" y="-23" width="18" height="3" rx="1.5" fill="#fff" stroke="currentColor" stroke-width="1"/>`);
+  g.push(`<circle cx="0" cy="-14" r="6" fill="#f3d2b3" stroke="currentColor" stroke-width="1"/>`);
+  g.push(`<circle cx="-2" cy="-15" r="0.9" fill="currentColor"/><circle cx="2" cy="-15" r="0.9" fill="currentColor"/>`);
+  g.push(`<path d="M-2.5 -11.5 q2.5 2 5 0" fill="none" stroke="currentColor" stroke-width="0.9"/>`);
+  g.push(`<rect x="-7" y="-8" width="14" height="14" rx="3" fill="${col}" stroke="currentColor" stroke-width="1"/>`);
+  if (opts.walk) g.push(`<path d="M-3 6 l-3 7 M3 6 l4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`);
+  else g.push(`<path d="M-3 6 v7 M3 6 v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`);
+  if (opts.card) g.push(`<g transform="translate(9 -4) rotate(12)"><rect x="0" y="0" width="10" height="12" rx="1" fill="#fff" stroke="currentColor" stroke-width="0.9"/><path d="M2 3 h6 M2 6 h6 M2 9 h4" stroke="${col}" stroke-width="1"/></g>`);
+  g.push(`</g>`);
+  return g.join('');
+}
+function sciFig(x, y, col) {
+  // data scientist: glasses and a laptop, no hat
+  return `<g transform="translate(${x} ${y})">
+    <path d="M-7 -20 q7 -8 14 0 v4 h-14z" fill="#3b2a1a"/>
+    <circle cx="0" cy="-14" r="6" fill="#f3d2b3" stroke="currentColor" stroke-width="1"/>
+    <circle cx="-2.4" cy="-14.5" r="2.2" fill="none" stroke="currentColor" stroke-width="0.9"/><circle cx="2.4" cy="-14.5" r="2.2" fill="none" stroke="currentColor" stroke-width="0.9"/><path d="M-0.2 -14.5 h0.4" stroke="currentColor" stroke-width="0.9"/>
+    <path d="M-2.5 -11.5 q2.5 2 5 0" fill="none" stroke="currentColor" stroke-width="0.9"/>
+    <rect x="-7" y="-8" width="14" height="14" rx="3" fill="#555" stroke="currentColor" stroke-width="1"/>
+    <rect x="-9" y="-3" width="13" height="8" rx="1" fill="#ddd" stroke="currentColor" stroke-width="0.9"/><rect x="-8" y="-2" width="11" height="5" fill="${col}" opacity=".7"/>
+    <path d="M-3 6 v7 M3 6 v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </g>`;
+}
+function robotFig(x, y, col, on, spark) {
+  const face = on ? `<rect x="6" y="8" width="7" height="5" rx="1" fill="${col}"/><rect x="19" y="8" width="7" height="5" rx="1" fill="${col}"/><path d="M10 19 q6 4 12 0" fill="none" stroke="${col}" stroke-width="1.6"/>`
+                  : `<path d="M8 10 l5 4 M13 10 l-5 4 M19 10 l5 4 M24 10 l-5 4" stroke="#999" stroke-width="1.4"/>`;
+  return `<g transform="translate(${x} ${y})">
+    <rect x="0" y="0" width="32" height="26" rx="5" fill="${on ? '#eceff4' : '#d8d8d8'}" stroke="currentColor" stroke-width="1"/>
+    ${face}
+    <rect x="4" y="27" width="24" height="14" rx="3" fill="${on ? '#cfd6e0' : '#cfcfcf'}" stroke="currentColor" stroke-width="1"/>
+    <path d="M16 -5 v5" stroke="currentColor" stroke-width="1.2"/><circle cx="16" cy="-6" r="2" fill="${on ? col : '#999'}"/>
+    ${spark ? `<path d="M38 -2 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="#f2c200" stroke="currentColor" stroke-width=".6"/>` : ''}
+  </g>`;
+}
+function burgerIcon(x, y, grey) {
+  const bun = grey ? '#b9b3a6' : '#e9b453', patty = grey ? '#8a8378' : '#7a4a2a', leaf = grey ? '#a7aa9c' : '#64c25f';
+  return `<g transform="translate(${x} ${y})"><path d="M0 7 q9 -9 18 0z" fill="${bun}" stroke="currentColor" stroke-width=".7"/><rect x="0" y="7" width="18" height="2.5" fill="${leaf}"/><rect x="0" y="9.5" width="18" height="3" fill="${patty}"/><rect x="0" y="12.5" width="18" height="3.5" rx="1.5" fill="${bun}" stroke="currentColor" stroke-width=".7"/></g>`;
+}
+function shopSvg(f, t, col, idx) {
+  const h = f.hist[t], ev = h.ev, m = FIRMS[f.id], ai = h.aiOn;
+  const prevEv = t > 0 ? f.hist[t - 1].ev : null;
+  const cooks = Math.max(1, Math.min(6, Math.round(h.human / 25)));
+  const out = [];
+  // ground and building
+  out.push(`<line x1="8" y1="292" x2="${SHOP_W - 8}" y2="292" stroke="currentColor" stroke-width="1" opacity=".5"/>`);
+  out.push(`<rect x="22" y="100" width="206" height="192" rx="6" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>`);
+  // awning stripes
+  for (let i = 0; i < 10; i++) out.push(`<rect x="${18 + i * 21.4}" y="84" width="21.4" height="22" fill="${i % 2 ? col : '#fff'}" stroke="currentColor" stroke-width=".8"/>`);
+  out.push(`<path d="M18 106 ${Array.from({ length: 10 }, (_, i) => `q10.7 10 21.4 0`).join(' ')}" fill="none" stroke="currentColor" stroke-width=".8"/>`);
+  // sign
+  out.push(`<rect x="40" y="36" width="170" height="44" rx="8" fill="${col}" stroke="currentColor" stroke-width="1.2"/>`);
+  out.push(`<text x="125" y="55" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">${f.id} ${m.name}</text>`);
+  out.push(`<text x="125" y="72" text-anchor="middle" font-size="11" fill="#fff" opacity=".9">${m.sub}</text>`);
+  out.push(`<path d="M60 80 v6 M190 80 v6" stroke="currentColor" stroke-width="1.5"/>`);
+  // window with grill, robot and data stack
+  out.push(`<rect x="38" y="124" width="112" height="78" rx="4" fill="var(--plane)" stroke="currentColor" stroke-width="1"/>`);
+  out.push(`<rect x="44" y="176" width="42" height="20" rx="2" fill="#555" stroke="currentColor" stroke-width=".8"/><path d="M48 182 h34 M48 188 h34" stroke="#999" stroke-width="1"/>`);
+  out.push(burgerIcon(50, 158, false)); out.push(burgerIcon(68, 158, false));
+  if (f.id !== 'A') {
+    out.push(robotFig(96, 130, col, ai, ai && ev.aiNew > 0));
+    const stack = Math.round(h.data * 40);
+    for (let i = 0; i < Math.floor(stack / 4); i++) out.push(`<rect x="134" y="${196 - i * 4 - 3}" width="12" height="3" fill="#fff" stroke="currentColor" stroke-width=".6"/>`);
+    if (!ai) out.push(`<text x="112" y="200" text-anchor="middle" font-size="10" fill="var(--muted)">아직 AI 없음</text>`);
+  } else {
+    out.push(`<text x="112" y="150" text-anchor="middle" font-size="11" fill="var(--muted)">AI 없음</text>`);
+  }
+  // door
+  out.push(`<rect x="166" y="206" width="46" height="86" rx="3" fill="#8a6a4a" stroke="currentColor" stroke-width="1"/><circle cx="204" cy="252" r="2" fill="currentColor"/>`);
+  // cooks inside: up to 8, two rows
+  for (let i = 0; i < cooks; i++) { const row = Math.floor(i / 3), cx = 50 + (i % 3) * 28 + row * 8, cy = 238 + row * 44; out.push(cookFig(cx, cy, col)); }
+  // data scientist for dual chains
+  if (ai && f.hist[t].dualOn) { out.push(sciFig(146, 282, col)); out.push(`<path d="M146 250 q0 -30 -20 -70" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>`); }
+  // badges: stale
+  if (h.stale > 0) { out.push(`<g transform="translate(176 110)"><rect x="0" y="0" width="52" height="20" rx="10" fill="#555"/>${burgerIcon(4, 1, true)}<text x="30" y="14" font-size="11" fill="#fff">낡음 ${h.stale}</text></g>`); }
+  // turnover event: cook walking out (this quarter or last)
+  const tv = ev.left ? ev : (prevEv && prevEv.left ? prevEv : null);
+  if (tv) {
+    const kept = tv.leftKept, lost = tv.left - tv.leftKept, n = Math.max(1, Math.round(tv.left / 15));
+    for (let i = 0; i < Math.min(n, 2); i++) out.push(cookFig(226 + i * 14, 262 + i * 8, col, { walk: true, card: lost > 0 }));
+    const msg = lost > 0 && kept > 0 ? `퇴사: ${lost}개 잃음, ${kept}개는 AI에` : lost > 0 ? `퇴사: 비법 ${lost}개 잃음` : `퇴사: 비법은 AI에 남음`;
+    const bw = 12 + msg.length * 9.2;
+    out.push(`<g transform="translate(${228 - bw} 184)"><rect x="0" y="0" width="${bw}" height="18" rx="9" fill="${lost > 0 ? '#c0392b' : '#1f8a4c'}"/><text x="${bw / 2}" y="13" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">${msg}</text></g>`);
+  }
+  // virtualization sparkle: a recipe card flying into the robot
+  const strip = [];
+  if (ai && ev.aiNew > 0) strip.push(`AI 발견 +${ev.aiNew}`);
+  if (ai && f.hist[t].virtOn && ev.virt > 0) strip.push(`비법 저장 +${ev.virt}`);
+  if (strip.length) out.push(`<text x="38" y="119" font-size="10" fill="${col}" font-weight="600">${strip.join(' · ')}</text>`);
+  // dropped stale
+  if (ev.dropped > 0) out.push(`<text x="224" y="146" text-anchor="end" font-size="10" fill="var(--muted)">낡은 것 ${ev.dropped}개 버림</text>`);
+  // score and counts
+  out.push(`<text x="20" y="316" font-size="12" fill="var(--ink2)">점수 <tspan font-weight="700" font-size="16" fill="var(--ink)">${h.score}</tspan>  <tspan fill="var(--muted)">레시피 ${h.valid}${f.id !== 'A' ? ' · 데이터 ' + Math.round(h.data * 100) + '%' : ''}</tspan></text>`);
+  return `<g transform="translate(${idx * SHOP_W} 0)">${out.join('')}</g>`;
+}
+function renderStreet() {
+  const svg = $('street-svg'), box = $('street'), W = box.clientWidth; if (!W) return;
+  const firms = state.run.firms, n = firms.length, cols = W < 640 ? 2 : n, rows = Math.ceil(n / cols);
+  const t = state.t, shifted = state.run.shifts.find(s => s.t === t || s.t === t - 1);
+  const top = 28;
+  svg.setAttribute('viewBox', `0 0 ${cols * SHOP_W} ${top + rows * SHOP_H}`);
+  let inner = `<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>`;
+  if (shifted) {
+    inner += `<g transform="translate(${cols * SHOP_W / 2} 2)"><circle cx="-80" cy="12" r="11" fill="#7d7d7d"/><circle cx="-50" cy="7" r="14" fill="#7d7d7d"/><circle cx="-15" cy="5" r="16" fill="#7d7d7d"/><circle cx="22" cy="7" r="14" fill="#7d7d7d"/><circle cx="55" cy="9" r="13" fill="#7d7d7d"/><circle cx="82" cy="13" r="10" fill="#7d7d7d"/><rect x="-92" y="10" width="184" height="14" rx="7" fill="#7d7d7d"/><text x="0" y="17" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">입맛이 바뀌었어요! 새 패티 등장</text><path d="M-60 26 l-4 6 M-20 27 l-3 6 M20 27 l-3 6 M60 26 l-4 6" stroke="#9db7d8" stroke-width="1.6" stroke-linecap="round"/></g>`;
+  } else {
+    inner += `<text x="${cols * SHOP_W / 2}" y="18" text-anchor="middle" font-size="12" fill="var(--muted)">${t}분기</text>`;
+  }
+  firms.forEach((f, i) => { const r = Math.floor(i / cols), c = i % cols; inner += `<g transform="translate(0 ${top + r * SHOP_H})">${shopSvg(f, t, cssVar(FIRMS[f.id].color), c)}</g>`; });
+  svg.innerHTML = inner;
+  // ticker: what happened this quarter
+  const parts = [];
+  if (state.run.shifts.find(s => s.t === t)) parts.push('<b>입맛이 바뀌었습니다.</b> 그 구역의 레시피는 낡은 것이 됩니다');
+  for (const f of firms) {
+    const ev = f.hist[t].ev, name = f.id + ' ' + FIRMS[f.id].name;
+    if (ev.left) { const lost = ev.left - ev.leftKept; parts.push(`${name}에서 조리사가 떠남: ` + (lost === 0 ? `비법 ${ev.leftKept}개 모두 AI에 남음` : ev.leftKept ? `비법 ${lost}개 잃음, ${ev.leftKept}개는 AI에 남음` : `비법 ${lost}개 잃음`)); }
+    if (ev.dropped) parts.push(`${name}이(가) 낡은 레시피 ${ev.dropped}개를 알아채고 버림`);
+  }
+  $('ticker').innerHTML = t === 0 ? '0분기: 네 체인 모두 같은 레시피 25개로 개업했습니다. 재생을 눌러 보세요.' : (parts.length ? `${t}분기: ` + parts.join(' · ') : `${t}분기: 조용한 분기입니다. 조리사와 AI가 새 레시피를 찾는 중`);
+}
+
 function renderAll() {
   $('scrub').value = state.t; $('scrub-out').textContent = state.t + ' / ' + T + '분기';
-  renderChart(); renderMaps(); renderTable();
+  renderStreet(); renderChart(); renderMaps(); renderTable();
 }
 
 function stop() { clearInterval(state.timer); state.timer = null; $('play').textContent = '재생'; }
@@ -469,7 +614,7 @@ function play() {
   if (state.timer) { stop(); return; }
   if (state.t >= T) state.t = 0;
   $('play').textContent = '일시정지'; renderAll();
-  state.timer = setInterval(() => { state.t++; renderAll(); if (state.t >= T) stop(); }, 110);
+  state.timer = setInterval(() => { state.t++; renderAll(); if (state.t >= T) stop(); }, 170);
 }
 
 for (const id of ['turnover', 'shift', 'dual', 'share']) $(id).addEventListener('input', () => { syncOutputs(); recompute(); });
@@ -484,7 +629,8 @@ plot.addEventListener('pointerleave', () => { state.hoverQ = null; renderHover()
 plot.addEventListener('focus', () => { if (state.hoverQ == null) { state.hoverQ = state.t; renderHover(); } });
 plot.addEventListener('blur', () => { state.hoverQ = null; renderHover(); });
 plot.addEventListener('keydown', e => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); state.hoverQ = Math.max(0, Math.min(state.t, (state.hoverQ ?? state.t) + (e.key === 'ArrowLeft' ? -1 : 1))); renderHover(); });
-new ResizeObserver(() => { if (state.run) { renderChart(); renderMaps(); } }).observe($('plot'));
+new ResizeObserver(() => { if (state.run) { renderStreet(); renderChart(); renderMaps(); } }).observe($('plot'));
+new ResizeObserver(() => { if (state.run) renderStreet(); }).observe($('street'));
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => renderAll());
 new MutationObserver(() => renderAll()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
