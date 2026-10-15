@@ -139,7 +139,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
 <div class="page">
   <header>
     <h1>네 햄버거 체인의 경주</h1>
-    <p class="lede">같은 레시피 25개로 개업한 햄버거 체인 넷이 80분기 동안 새 레시피를 익힙니다. 조리사만 배우는 체인과 AI가 함께 배우는 체인은 조리사의 이직과 입맛 변화 앞에서 어떻게 달라질까요. Pedota (2026)의 확장된 흡수역량 모형을 단순한 규칙으로 옮긴 예시 시뮬레이션입니다.</p>
+    <p class="lede">같은 레시피 25개로 개업한 햄버거 체인 넷이 80분기 동안 새 레시피를 익힙니다. 조리사만 배우는 체인과 AI가 함께 배우는 체인은 조리사의 이직과 입맛 변화 앞에서 어떻게 달라질까요. Pedota (2026)의 확장된 흡수역량 모형을 단순한 규칙으로 옮긴 예시 시뮬레이션입니다. 논문이 추가한 네 조각 <b>1. data absorption effort · 2. data heritage · 3. virtualization of tacit knowledge · 4. cognitive duality</b>를 체인마다 하나씩 더 줍니다.</p>
   </header>
 
   <div class="card controls">
@@ -155,7 +155,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
         <input type="range" id="turnover" min="0" max="10" step="0.5" value="1"></label>
       <label class="ctl" for="shift"><span class="ctl-head">환경이 바뀔 확률 (분기당)<output id="shift-out"></output></span>
         <input type="range" id="shift" min="0" max="30" step="1" value="5"></label>
-      <label class="ctl" for="dual"><span class="ctl-head">D의 사람–AI 협력 강도<output id="dual-out"></output></span>
+      <label class="ctl" for="dual"><span class="ctl-head">D의 사람–AI 협력 강도 (4. cognitive duality)<output id="dual-out"></output></span>
         <input type="range" id="dual" min="0" max="1" step="0.05" value="0.8"></label>
       <label class="check" for="late"><input type="checkbox" id="late">후발 체인 E 추가</label>
       <label class="ctl off" for="share" id="share-ctl"><span class="ctl-head">공유 데이터 플랫폼 (E용)<output id="share-out"></output></span>
@@ -166,7 +166,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
   <div class="card street-card">
     <div class="chart-top">
       <h2>햄버거 거리</h2>
-      <span class="sub">조리사 한 명 = 레시피 약 25개 · 로봇 = AI · 영수증 더미 = 데이터 유산 · 안경 쓴 사람 = 데이터 과학자 · 문밖으로 나가는 조리사 = 이직</span>
+      <span class="sub">조리사 한 명 = 레시피 약 25개 · 로봇 = AI · 영수증 더미 = 데이터 유산 (2. data heritage) · 안경 쓴 사람 = 데이터 과학자 (4. cognitive duality) · 문밖으로 나가는 조리사 = 이직</span>
     </div>
     <div class="street" id="street"><svg id="street-svg" role="img" aria-label="네 햄버거 체인의 현재 상태 그림"></svg></div>
     <p class="ticker" id="ticker"></p>
@@ -213,7 +213,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     </div>
     <div class="scroll">
       <table>
-        <thead><tr><th>체인</th><th>구성</th><th>쓸 수 있는 레시피</th><th>낡은 레시피</th><th>데이터 유산</th><th>점수 (이 실행)</th><th>40회 평균 ± 표준편차</th></tr></thead>
+        <thead><tr><th>체인</th><th>구성</th><th>쓸 수 있는 레시피</th><th>낡은 레시피</th><th>데이터 유산 (2. data heritage)</th><th>점수 (이 실행)</th><th>40회 평균 ± 표준편차</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
@@ -223,11 +223,11 @@ section { display: flex; flex-direction: column; gap: 12px; }
     <h2>이 모형의 규칙</h2>
     <dl class="rules">
       <div><dt>조리사의 학습</dt><dd>매 분기 이미 아는 레시피 근처에서만 새 레시피를 찾습니다. 아는 메뉴가 넓어질수록 시도해 볼 가장자리도 넓어집니다.</dd></div>
-      <div><dt>AI의 학습</dt><dd>레시피 지도 어디서든 찾고, 주문·그릴 데이터가 쌓일수록 성공 확률이 올라갑니다. AI를 쓰는 체인은 노력의 30%를 데이터 모으기에 돌려서 조리사의 탐색이 그만큼 줄어듭니다.</dd></div>
-      <div><dt>비법의 가상화 (C, D, E)</dt><dd>그릴 장인의 감을 AI에 옮겨 담습니다. 장인이 떠나도 체인에 남습니다. (논문의 '암묵지의 가상화')</dd></div>
+      <div><dt>AI의 학습 (1. data absorption effort · 2. data heritage)</dt><dd>레시피 지도 어디서든 찾고, 주문·그릴 데이터가 쌓일수록 성공 확률이 올라갑니다. AI를 쓰는 체인은 노력의 30%를 데이터 모으기에 돌려서 조리사의 탐색이 그만큼 줄어듭니다.</dd></div>
+      <div><dt>비법의 가상화 (3. virtualization of tacit knowledge · C, D, E)</dt><dd>그릴 장인의 감을 AI에 옮겨 담습니다. 장인이 떠나도 체인에 남습니다. (논문의 '암묵지의 가상화')</dd></div>
       <div><dt>이직</dt><dd>매 분기 조리사가 가진 레시피의 일정 비율이 사라집니다. AI에 담아둔 레시피와 AI가 찾은 레시피는 남습니다.</dd></div>
       <div><dt>환경 변화 (입맛·재료)</dt><dd>손님 입맛이 바뀌거나 새 패티가 나오면 그 구역의 레시피는 낡은 것이 되어 점수를 깎습니다. 조리사는 낡은 레시피를 분기당 25% 확률로 알아채고 버리지만, AI에만 있는 레시피는 3%입니다.</dd></div>
-      <div><dt>인지적 이중성 (사람–AI 협력)</dt><dd>사람과 AI의 협력이 강할수록 낡은 레시피를 빨리 걸러내고, AI가 찾은 레시피를 조리사가 새 시도의 발판으로 삼습니다. B와 C는 0.1로 고정이고 D와 E는 슬라이더 값을 따릅니다.</dd></div>
+      <div><dt>인지적 이중성 (4. cognitive duality · 사람–AI 협력)</dt><dd>사람과 AI의 협력이 강할수록 낡은 레시피를 빨리 걸러내고, AI가 찾은 레시피를 조리사가 새 시도의 발판으로 삼습니다. B와 C는 0.1로 고정이고 D와 E는 슬라이더 값을 따릅니다.</dd></div>
       <div><dt>후발 체인 E</dt><dd>D와 같은 구조지만 AI와 데이터를 24분기 늦게 시작합니다. 공유 데이터 플랫폼은 D와의 데이터 격차를 매 분기 일부 메워줍니다. (논문 정책 파트의 '격차 확대' 우려를 보는 옵션)</dd></div>
       <div><dt>출발점</dt><dd>모든 체인이 레시피 지도 한가운데 같은 25칸에서 시작하고, 같은 입맛 변화를 겪습니다.</dd></div>
     </dl>
@@ -335,11 +335,11 @@ if (typeof module !== 'undefined') module.exports = { simulate, average, G, N, T
 
 // ---- page ----
 const FIRMS = {
-  A: { name: '할아버지 그릴', sub: '조리사만 배움', color: '--s1' },
-  B: { name: '빅데이터 버거', sub: 'A + 데이터 유산', color: '--s2' },
-  C: { name: '비법 버거', sub: 'B + 장인의 비법을 AI에 저장', color: '--s3' },
-  D: { name: '드림팀 버거', sub: 'C + 조리사와 AI가 서로 고침', color: '--s4' },
-  E: { name: '후발 버거', sub: 'D와 같은 구조, 24분기 늦게 개업', color: '--s5' }
+  A: { name: '할아버지 그릴', sub: '조리사만 배움', piece: '조리사만 배움 (classic ACAP)', color: '--s1' },
+  B: { name: '빅데이터 버거', sub: 'A + ①② 데이터 유산', piece: 'A + 1. data absorption effort · 2. data heritage', color: '--s2' },
+  C: { name: '비법 버거', sub: 'B + ③ 비법을 AI에', piece: 'B + 3. virtualization of tacit knowledge', color: '--s3' },
+  D: { name: '드림팀 버거', sub: 'C + ④ 조리사·AI 서로 고침', piece: 'C + 4. cognitive duality', color: '--s4' },
+  E: { name: '후발 버거', sub: 'D와 같은 구조, 24분기 늦게 개업', piece: 'D와 같은 구조 (1–4 모두), 24분기 늦게 개업', color: '--s5' }
 };
 const PRESETS = { base: [1, 5], turnover: [6, 5], shift: [1, 25], both: [6, 25] };
 const $ = id => document.getElementById(id);
@@ -383,7 +383,7 @@ function buildMaps() {
     const m = FIRMS[f.id], sw = htmlEl('i'); sw.style.background = `var(${m.color})`;
     box.append(htmlEl('div', { className: 'card map' }, [
       htmlEl('div', { className: 'map-head' }, [htmlEl('span', { className: 'map-name' }, [sw, f.id + ' ' + m.name]), htmlEl('span', { className: 'map-score', id: 'score-' + f.id })]),
-      htmlEl('div', { className: 'map-sub', textContent: m.sub }),
+      htmlEl('div', { className: 'map-sub', textContent: m.piece }),
       htmlEl('canvas', { id: 'cv-' + f.id })
     ]));
   }
@@ -470,7 +470,7 @@ function renderTable() {
     const h = f.hist[state.t], sw = htmlEl('i'); sw.style.background = `var(${FIRMS[f.id].color})`;
     const a = state.avg && state.avg[f.id];
     tb.append(htmlEl('tr', {}, [
-      htmlEl('td', {}, [sw, f.id + ' ' + FIRMS[f.id].name]), htmlEl('td', { textContent: FIRMS[f.id].sub }),
+      htmlEl('td', {}, [sw, f.id + ' ' + FIRMS[f.id].name]), htmlEl('td', { textContent: FIRMS[f.id].piece }),
       htmlEl('td', { textContent: h.valid }), htmlEl('td', { textContent: h.stale }),
       htmlEl('td', { textContent: f.id === 'A' ? '없음' : Math.round(h.data * 100) + '%' }),
       htmlEl('td', { textContent: h.score }), htmlEl('td', { textContent: a ? `${a.mean.toFixed(0)} ± ${a.sd.toFixed(0)}` : '계산 중' })
