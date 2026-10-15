@@ -147,15 +147,15 @@ section { display: flex; flex-direction: column; gap: 12px; }
       <span>시나리오</span>
       <button type="button" data-preset="base" id="preset-base">기본</button>
       <button type="button" data-preset="turnover" id="preset-turnover">조리사 이직 많음</button>
-      <button type="button" data-preset="shift" id="preset-shift">입맛이 자주 바뀜</button>
+      <button type="button" data-preset="shift" id="preset-shift">환경이 자주 바뀜</button>
       <button type="button" data-preset="both" id="preset-both">둘 다</button>
     </div>
     <div class="row">
       <label class="ctl" for="turnover"><span class="ctl-head">이직으로 잃는 노하우 (분기당)<output id="turnover-out"></output></span>
         <input type="range" id="turnover" min="0" max="10" step="0.5" value="1"></label>
-      <label class="ctl" for="shift"><span class="ctl-head">입맛·재료가 바뀔 확률 (분기당)<output id="shift-out"></output></span>
+      <label class="ctl" for="shift"><span class="ctl-head">환경이 바뀔 확률 (분기당)<output id="shift-out"></output></span>
         <input type="range" id="shift" min="0" max="30" step="1" value="5"></label>
-      <label class="ctl" for="dual"><span class="ctl-head">D의 조리사–데이터 과학자 유대<output id="dual-out"></output></span>
+      <label class="ctl" for="dual"><span class="ctl-head">D의 사람–AI 협력 강도<output id="dual-out"></output></span>
         <input type="range" id="dual" min="0" max="1" step="0.05" value="0.8"></label>
       <label class="check" for="late"><input type="checkbox" id="late">후발 체인 E 추가</label>
       <label class="ctl off" for="share" id="share-ctl"><span class="ctl-head">공유 데이터 플랫폼 (E용)<output id="share-out"></output></span>
@@ -226,8 +226,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
       <div><dt>AI의 학습</dt><dd>레시피 지도 어디서든 찾고, 주문·그릴 데이터가 쌓일수록 성공 확률이 올라갑니다. AI를 쓰는 체인은 노력의 30%를 데이터 모으기에 돌려서 조리사의 탐색이 그만큼 줄어듭니다.</dd></div>
       <div><dt>비법의 가상화 (C, D, E)</dt><dd>그릴 장인의 감을 AI에 옮겨 담습니다. 장인이 떠나도 체인에 남습니다. (논문의 '암묵지의 가상화')</dd></div>
       <div><dt>이직</dt><dd>매 분기 조리사가 가진 레시피의 일정 비율이 사라집니다. AI에 담아둔 레시피와 AI가 찾은 레시피는 남습니다.</dd></div>
-      <div><dt>입맛·재료 변화</dt><dd>손님 입맛이 바뀌거나 새 패티가 나오면 그 구역의 레시피는 낡은 것이 되어 점수를 깎습니다. 조리사는 낡은 레시피를 분기당 25% 확률로 알아채고 버리지만, AI에만 있는 레시피는 3%입니다.</dd></div>
-      <div><dt>인지적 이중성</dt><dd>조리사와 데이터 과학자의 유대가 강할수록 낡은 레시피를 빨리 걸러내고, AI가 찾은 레시피를 조리사가 새 시도의 발판으로 삼습니다. B와 C는 0.1로 고정이고 D와 E는 슬라이더 값을 따릅니다.</dd></div>
+      <div><dt>환경 변화 (입맛·재료)</dt><dd>손님 입맛이 바뀌거나 새 패티가 나오면 그 구역의 레시피는 낡은 것이 되어 점수를 깎습니다. 조리사는 낡은 레시피를 분기당 25% 확률로 알아채고 버리지만, AI에만 있는 레시피는 3%입니다.</dd></div>
+      <div><dt>인지적 이중성 (사람–AI 협력)</dt><dd>사람과 AI의 협력이 강할수록 낡은 레시피를 빨리 걸러내고, AI가 찾은 레시피를 조리사가 새 시도의 발판으로 삼습니다. B와 C는 0.1로 고정이고 D와 E는 슬라이더 값을 따릅니다.</dd></div>
       <div><dt>후발 체인 E</dt><dd>D와 같은 구조지만 AI와 데이터를 24분기 늦게 시작합니다. 공유 데이터 플랫폼은 D와의 데이터 격차를 매 분기 일부 메워줍니다. (논문 정책 파트의 '격차 확대' 우려를 보는 옵션)</dd></div>
       <div><dt>출발점</dt><dd>모든 체인이 레시피 지도 한가운데 같은 25칸에서 시작하고, 같은 입맛 변화를 겪습니다.</dd></div>
     </dl>
